@@ -1,5 +1,5 @@
 ---
-description: Draft a Conventional Commit message
+description: Draft Conventional Commit message(s); supports workspaces with multiple git repositories
 ---
 
 You are drafting a git commit message for this change set following **Commit standards** (Conventional Commits: type, optional scope, imperative description).
@@ -40,17 +40,28 @@ fix(prints): expose legacy appliedDiscount.discount in receipt preview data
 
 The "don't" example describes the patch (which field was exposed). The "do" example describes the intent (the preview was broken, and why).
 
+## Multi-repository workspaces
+
+The workspace may contain more than one git repository, and the workspace root itself may not be a git repo.
+
+- **Discover roots**: if `git status` fails with "not a git repository", find each repo (directories with a `.git`, or paths the user names) and treat each as a separate target.
+- **Inspect per repo**: run the inspect command **once from each repo root** that changed.
+- **Check current branch per repo**: read it from the `On branch <name>` line of each repo's `git status`. If the dirty repos are **not all on the same branch**, **warn the user** with the per-repo `repo → branch` mapping and pause for confirmation before committing.
+- **One commit per repo**: each repo gets its own message; never bundle unrelated repos.
+- **Coordinated changes**: when one feature spans multiple repos, align wording across messages and call out merge or deploy order if it matters (e.g. a breaking API before its clients).
+- **Commit all repos**: when the user asks to commit everything, iterate each dirty repo. `git add` and `git commit` are both allowed inside the explicit "commit" request, run from each repo's root.
+
 ## Allowed commands
 
-To keep this prompt fast and easy to whitelist, only these exact commands may be run. Do **not** invent variants (no `git add`, no `git diff <path>`, no `git show`, no `git log -p`, etc.).
+To keep this prompt fast and easy to whitelist, prefer these patterns. Do **not** invent variants (`git diff <path>`, `git show`, `git log -p`, etc.).
 
-1. **Inspect** (one command, always safe):
+1. **Inspect** (per git repository root):
 
    ```bash
    git status && git diff HEAD
    ```
 
-   This covers tracked changes (staged + unstaged) and lists untracked files. Run it **at most once** per draft.
+   `cd` into each repo root first if the workspace root is not a git repository.
 
 2. **Mirror repo style** (optional, only when the type/scope/wording is unclear from the chat):
 
@@ -58,7 +69,7 @@ To keep this prompt fast and easy to whitelist, only these exact commands may be
    git log --oneline -20
    ```
 
-3. **Commit** (only after the user has approved the message). Use a HEREDOC so multi-line bodies survive shell quoting:
+3. **Commit** (only after the user has approved the message(s)). Use a HEREDOC so multi-line bodies survive shell quoting:
 
    ```bash
    git commit -m "$(cat <<'EOF'
@@ -71,27 +82,31 @@ To keep this prompt fast and easy to whitelist, only these exact commands may be
    )"
    ```
 
-Anything beyond this list (staging files, amending, pushing, rebasing, etc.) requires an **explicit** request from the user.
+For multiple repositories, repeat staging and the commit step inside each repo's root.
+
+Anything else (amend, push, rebase, etc.) requires an **explicit** request from the user.
 
 ## Workflow
 
 1. **Infer intent primarily from this chat** — what the user asked for, the constraints they gave, the outcome they wanted. This is the main source for the message.
 
-2. Run the single inspect command above to confirm what actually changed and to spot mixed concerns. Skip it only if the chat already makes the change set fully clear.
+2. **Identify git root(s)** — single repo or several. Run the inspect command from each repo that changed to confirm the diff and spot mixed concerns. Skip only when the chat already makes every change set fully clear.
 
 3. Choose **type** from the nature and intent of the change (not from filename patterns).
 
 4. Choose **scope** when it narrows the intent to a module or feature; skip it when it adds noise.
 
-5. Draft the **subject**. Keep it on one line. Reuse the user's and the code's own words.
+5. Draft the **subject** (per repo if multi-repo). Keep it on one line. Reuse the user's and the code's own words.
 
 6. Add a **body** or `BREAKING CHANGE` footer **only if** the subject cannot carry the intent on its own.
 
 7. **Only ask the user if the reason of the change is unclear** and the chat plus the diff do not give enough context to write an honest subject. Otherwise, draft and propose.
 
+8. For multi-repo changes, show all proposed messages **labeled by repo path** before any commit, unless the user already approved a batch commit.
+
 ## Output
 
-- **Always show the full proposed commit message to the user** (subject, plus body and `BREAKING CHANGE` if any) in a clear, copy-ready block **before** running the commit command. Pause for confirmation if the workflow is ambiguous; never commit silently.
-- If the changes bundle unrelated intents, recommend **multiple commits** and give a suggested message for each.
-- Run the commit command **only after** the user has seen the message and explicitly asked you to perform the commit (or has clearly confirmed to proceed).
+- **Always show the full proposed commit message(s)** to the user (subject, plus body and `BREAKING CHANGE` if any) in clear, copy-ready blocks **before** running the commit command — **one block per repository** when several git roots changed. Pause for confirmation if the workflow is ambiguous; never commit silently.
+- If **one repository** bundles unrelated intents, recommend **multiple commits** in that repo and give a suggested message for each.
+- Run the commit command **only after** the user has seen the message(s) and explicitly asked you to perform the commit (or has clearly confirmed to proceed).
 - **Never run `git push`** (or any remote-upload equivalent) unless the user **explicitly** asks you to push.
