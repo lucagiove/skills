@@ -13,7 +13,7 @@ You are drafting a git commit message for this change set following **Commit sta
 - **Types** (pick one): `build`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `style`, `test`, `chore`.
 - **Subject**: imperative mood (e.g. "add ...", "fix ...", "restore ..."). It must answer "what intent does applying this commit serve?", not "what lines moved?".
 - **With scope**: `<type>(<scope>): <description>` — **without**: `<type>: <description>`.
-- **Scope**: optional but use it when it clarifies the area touched. Lowercase, short, taken from the module or feature name in the codebase.
+- **Scope**: optional but use it when it clarifies the area touched. Lowercase, short. **Must be derived from an actual folder / module or a term that already appears in recent `git log` entries for that repo.** Never invent a scope that doesn't map to a real module or established convention in the codebase. When uncertain, run `git log --oneline -20` to mirror existing scope style, or omit the scope entirely.
 - **Breaking changes**: if a shared library or API is not backward compatible, add a footer after a blank line:
 
   ```text
@@ -106,7 +106,7 @@ Anything else (amend, push, rebase, etc.) requires an **explicit** request from 
 
 ## Output
 
-- **Always show the full proposed commit message(s)** to the user (subject, plus body and `BREAKING CHANGE` if any) in clear, copy-ready blocks **before** running the commit command — **one block per repository** when several git roots changed. Pause for confirmation if the workflow is ambiguous; never commit silently.
+- **Always show the full proposed commit message(s)** to the user (subject, plus body and `BREAKING CHANGE` if any) in clear, copy-ready blocks **before** running the commit command — **one block per repository** when several git roots changed.
 - If **one repository** bundles unrelated intents, recommend **multiple commits** in that repo and give a suggested message for each.
-- Run the commit command **only after** the user has seen the message(s) and explicitly asked you to perform the commit (or has clearly confirmed to proceed).
+- **STOP after proposing. Never run `git add` or `git commit` until the user replies with an explicit confirmation** (e.g. "go", "yes", "ok", "do it"). Do not treat silence, a follow-up question, or an unrelated message as confirmation.
 - **Never run `git push`** (or any remote-upload equivalent) unless the user **explicitly** asks you to push.
