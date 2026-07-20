@@ -88,7 +88,7 @@ Anything else (amend, push, rebase, etc.) requires an **explicit** request from 
 
 ## Workflow
 
-1. **Infer intent primarily from this chat** — what the user asked for, the constraints they gave, the outcome they wanted. This is the main source for the message.
+1. **Infer intent primarily from this chat** — what the user asked for, the constraints they gave, the outcome they wanted. This is the main source for the message. When the work evolved through refactors or review, trace back to the original goal that motivated it; the most recent turns usually describe mechanism (how), not purpose (why).
 
 2. **Identify git root(s)** — single repo or several. Run the inspect command from each repo that changed to confirm the diff and spot mixed concerns. Skip only when the chat already makes every change set fully clear.
 
